@@ -18,12 +18,6 @@ function getConfigs(string $path = DIR_CONFIG): array
    return $settings;
 }
 
-$app = new Src\Application(new Src\Settings(getConfigs()));
+require_once __DIR__ . '/../routes/web.php';
 
-//Функция возвращает глобальный экземпляр приложения
-function app() {
-   global $app;
-   return $app;
-}
-
-return $app;
+return new Src\Application(new Src\Settings(getConfigs()));
