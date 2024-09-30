@@ -14,24 +14,19 @@
     <header>
         <nav class="nav">
             <a href="<?= app()->route->getUrl('/hello') ?>">Главная</a>
-            <?php
-            if (!app()->auth::check()):
-                ?>
-                <a href="<?= app()->route->getUrl('/login') ?>">Вход</a>
-                <a href="<?= app()->route->getUrl('/signup') ?>">Регистрация</a>
-
-                <?php
-            else:
-                ?>
-                <a href="<?= app()->route->getUrl('/logout') ?>">Выход (<?= app()->auth::user()->name ?>)</a>
-                <a href="<?= app()->route->getUrl('/employee') ?>">Создать сотрудника</a>
-                <a href="<?= app()->route->getUrl('/subunit') ?>">Создать подразделение</a>
-                <a href="<?= app()->route->getUrl('/assign_an_employee') ?>">Прикрепить сотрудника</a>
-                <a href="<?= app()->route->getUrl('/calculate') ?>">Подсчет среднего возраста</a>
-                <a href="<?= app()->route->getUrl('/subunit_sel') ?>">Выбор по подразделениям</a>
-                <?php
-            endif;
-            ?>
+            <?php if (app()->auth::check()): ?>
+                <a href="<?= app()->route->getUrl('/logout') ?>">Выход (<?= app()->auth::user()->login ?>)</a>
+                <?php if (app()->auth::role() == "admin"): ?>
+                    <a href="<?= app()->route->getUrl('/employee') ?>">Создать сотрудника отдела</a>
+                <?php elseif (app()->auth::role() == "hr"): ?>
+                    <a href="<?= app()->route->getUrl('/emp') ?>">Создать сотрудника</a>
+                    <a href="<?= app()->route->getUrl('/subunit') ?>">Создать подразделение</a>
+                    <a href="<?= app()->route->getUrl('/calculate') ?>">Подсчет среднего возраста</a>
+                    <a href="<?= app()->route->getUrl('/subunit_sel') ?>">Выбор по подразделениям</a>
+                <?php endif; ?>
+            <?php else: ?>
+                <a href="<?= app()->route->getUrl('/login') ?>">Войти</a>
+            <?php endif; ?>
         </nav>
     </header>
     <main>

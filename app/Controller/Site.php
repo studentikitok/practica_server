@@ -10,6 +10,7 @@ use Src\Auth\Auth;
 use Model\Role;
 use Model\Employee;
 use Model\Subunit;
+use Src\Validator\Validator;
 
 class Site
 {
@@ -27,6 +28,30 @@ class Site
 
     public function signup(Request $request): string
     {
+        if ($request->method === 'POST') {
+
+            $validator = new Validator($request->all(), [
+                'name' => ['required'],
+                'login' => ['required', 'unique:users,login'],
+                'password' => ['required']
+            ], [
+                'required' => 'Поле :field пусто',
+                'unique' => 'Поле :field должно быть уникально'
+            ]);
+
+            if ($validator->fails()) {
+                return new View(
+                    'site.signup',
+                    ['message' => json_encode($validator->errors(), JSON_UNESCAPED_UNICODE)]
+                );
+            }
+
+            if (User::create($request->all())) {
+                app()->route->redirect('/login');
+            }
+        }
+        return new View('site.signup');
+
         $roles = Role::all();
         if ($request->method === 'POST' && User::create($request->all())) {
             app()->route->redirect('/hello');
@@ -56,54 +81,52 @@ class Site
 
     public function employee(Request $request): string
     {
-        if($request->method === 'POST'){
+        if ($request->method === 'POST') {
             $properties = [
                 "login" => $request->all()["login"],
                 "password" => $request->all()["password"],
-                "role" => 2
+                "role" => 0
             ];
 
             if (User::create($properties)) {
                 app()->route->redirect('/employee');
             }
         }
-        
+
         $users = User::all();
         $roles = Role::all();
         $subunits = Subunit::all();
 
         return new View('site.employee', [
-            'subunits' => $subunits, 
-            'users' => $users, 
+            'subunits' => $subunits,
+            'users' => $users,
             'roles' => $roles
         ]);
     }
 
     public function emp(Request $request): string
     {
-        if($request->method === 'POST'){
-            $properties = [
-                "surname" => $request->all()["surname"],
-                "name" => $request->all()["name"],
-                "patronym" => $request->all()["patronym"],
-                "gender" => $request->all()["gender"],
-                "date_of_birth" => $request->all()["date_of_birth"],
-                "address" => $request->all()["address"],
-                "age" => $request->all()["age"],
-            ];
+        if ($request->method === 'POST') {
+            $empData = $request->all();
 
-            if (Employee::create($properties)) {
+            $dateOfBirth = $empData['Date_of_Birth'];
+            $birthDate = new \DateTime($dateOfBirth);
+            $currentDate = new \DateTime();
+            $age = $currentDate->diff($birthDate)->y;
+            $empData['Age'] = $age;
+
+            if (Employee::create($empData)) {
                 app()->route->redirect('/hello');
             }
         }
-        
+
         $users = User::all();
         $roles = Role::all();
         $subunits = Subunit::all();
 
         return new View('site.emp', [
-            'subunits' => $subunits, 
-            'users' => $users, 
+            'subunits' => $subunits,
+            'users' => $users,
             'roles' => $roles
         ]);
     }
@@ -122,46 +145,59 @@ class Site
         $subunits = Subunit::all();
 
         if (isset($request->all()["subdivision"])) {
-            $employee = Employee::where("subunit_id", $request->all()["subdivision"])->get();
+            $employees = Employee::where("subunit_id", $request->all()["subdivision"])->get();
 
             return new View('site.subunit_sel', [
                 'message' => 'hello working',
                 "subdivisions" => $subunits,
-                "employee" => $employee
+                "employees" => $employees
             ]);
         }
+
+        return new View('site.subunit_sel', [
+            'message' => 'hello working',
+            "subdivisions" => $subunits,
+        ]);
     }
-
-    public function assign_an_employee(Request $request): string
-    {
-        if ($request->method === 'GET') {
-            return new View('site.assign_an_employee');
-        }
-        if (Auth::attempt($request->all())) {
-            app()->route->redirect('/hello');
-        }
-
-        return new View('site.hello', ['message' => 'hello working']);
-    }
-
 
     public function calculate(Request $request): string
     {
         $subunits = Subunit::all();
 
-        if (isset($request->all()["subdivision"])) {
-            $employee = Employee::where("subunit_id", $request->all()["subdivision"])->get();
+        function __calculateAge($employees)
+        {
+            $srvozrast = 0;
+            $i = 0;
+            foreach ($employees as $employee) {
+                $dateOfBirth = $employee->date_of_birth;
+                $birthDate = new \DateTime($dateOfBirth);
+                $currentDate = new \DateTime();
+                $age = $currentDate->diff($birthDate)->y;
+                $srvozrast += $age;
+                $i += 1;
+            }
+            if ($i === 0) {
+                return 0;
+            }
+            $srvozrast = $srvozrast / $i;
+            return $srvozrast;
+        }
 
-            return new View('site.calculate', [
-                'message' => 'hello working',
-                "subdivisions" => $subunits,
-                "employee" => $employee
-            ]);
+        if ($request->method === 'POST') {
+            $filter = $request->all()['subunit_id'];
+            if ($filter) {
+                $allemps = Employee::where('subunit_id', $filter)->get();
+            } else {
+                $allemps = Employee::all();
+            }
+            $srvozrast = __calculateAge($allemps);
+            return new View('site.calculate', ['message' => 'hello working', 'subunits' => $subunits, 'srvozrast' => $srvozrast]);
         }
 
         return new View('site.calculate', [
             'message' => 'hello working',
-            "subdivisions" => $subunits,
+            'subunits' => $subunits,
+            'srvozrast' => ''
         ]);
 
     }

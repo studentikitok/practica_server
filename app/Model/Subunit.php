@@ -8,13 +8,13 @@ class Subunit extends Model
         'name',
         'description',
     ];
- 
-   use HasFactory;
 
-   public $timestamps = false;
+    use HasFactory;
 
-   public function getId(): int
-   {
-       return $this->id;
-   }
+    public $timestamps = false;
+
+    public function getId(): int
+    {
+        return $this->id;
+    }
 }
