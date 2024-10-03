@@ -85,7 +85,7 @@ class Site
             $properties = [
                 "login" => $request->all()["login"],
                 "password" => $request->all()["password"],
-                "role" => 0
+                "role" => 2
             ];
 
             if (User::create($properties)) {
@@ -109,11 +109,11 @@ class Site
         if ($request->method === 'POST') {
             $empData = $request->all();
 
-            $dateOfBirth = $empData['Date_of_Birth'];
+            $dateOfBirth = $empData['date_of_birth'];
             $birthDate = new \DateTime($dateOfBirth);
             $currentDate = new \DateTime();
             $age = $currentDate->diff($birthDate)->y;
-            $empData['Age'] = $age;
+            $empData['age'] = $age;
 
             if (Employee::create($empData)) {
                 app()->route->redirect('/hello');

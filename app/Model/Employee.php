@@ -12,7 +12,7 @@ class Employee extends Model
         'name',
         'patronym',
         'gender',
-        'date_of_Birth',
+        'date_of_birth',
         'address',
         'position',
         'subunit_id',
