@@ -82,14 +82,23 @@ class Site
     public function employee(Request $request): string
     {
         if ($request->method === 'POST') {
-            $properties = [
-                "login" => $request->all()["login"],
-                "password" => $request->all()["password"],
-                "role" => 2
-            ];
+            $validator = new Validator($request->all(), [
+                'login' => ['required', 'unique:users,login'],
+                'password' => ['required'],
+            ], [
+                'required' => 'Поле :field пусто',
+                'unique' => 'Поле :field должно быть уникально'
+            ]);
+
+            if ($validator->fails()) {
+                return new View('site.employee', ['message' => json_encode($validator->errors(), JSON_UNESCAPED_UNICODE)]);
+            }
+
+            $properties = $request->all();
+            $properties['role'] = 2;
 
             if (User::create($properties)) {
-                app()->route->redirect('/employee');
+                return redirect('/hello');
             }
         }
 
@@ -103,6 +112,8 @@ class Site
             'roles' => $roles
         ]);
     }
+
+
 
     public function emp(Request $request): string
     {
